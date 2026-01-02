@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-8">
+    
+    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+        <h2 class="text-2xl font-bold text-slate-800 mb-6">Pencarian Dokumen</h2>
+        
+        <form action="/" method="post" class="relative mb-6 group">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg class="h-5 w-5 text-gray-400 group-focus-within:text-indigo-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <input type="text" name="query" value="{{ query }}" placeholder="Masukkan kata kunci pencarian..." class="w-full pl-11 pr-24 py-4 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm">
+            <button type="submit" class="absolute right-2 top-2 bottom-2 bg-indigo-600 text-white px-6 rounded-lg font-medium hover:bg-indigo-700 transition shadow-md shadow-indigo-200">
+                Cari
+            </button>
+        </form>
+
+        {% if query %}
+        <div class="mb-8 p-6 bg-blue-50 border border-blue-100 rounded-xl">
+            <span class="text-xs font-bold text-blue-600 uppercase tracking-wide block mb-3">Preprocessing Query</span>
+            <div class="flex flex-wrap gap-2">
+                {% for token in query_tokens %}
+                    <span class="bg-white text-blue-700 px-4 py-1.5 rounded-full text-sm font-medium border border-blue-200 shadow-sm">{{ token }}</span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div>
+            <h3 class="font-bold text-lg text-slate-800 mb-5 pb-2 border-b border-gray-100">Hasil Perankinggan</h3>
+            {% if results %}
+                <div class="space-y-4">
+                    {% for res in results %}
+                    <div class="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all duration-300 group">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h4 class="text-xl font-bold text-slate-800 group-hover:text-indigo-600 transition">{{ res.filename }}</h4>
+                                <div class="text-xs text-gray-500 mt-1 bg-gray-100 inline-block px-2 py-0.5 rounded">Relevansi Tinggi</div>
+                            </div>
+                            <div class="text-right">
+                                <span class="block text-3xl font-bold text-indigo-600">{{ "%.4f"|format(res.score) }}</span>
+                                <span class="text-xs font-medium text-gray-400 uppercase tracking-wider">Score</span>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 text-xs font-mono text-slate-600 overflow-x-auto mb-4">
+                            <span class="font-bold text-slate-400 block mb-2">KALKULASI:</span>
+                            <div class="leading-relaxed whitespace-nowrap">
+                                {{ res.calc | safe }}
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <a href="/detail/{{ res.filename }}" class="inline-flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                                Analisis Dokumen 
+                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="flex flex-col items-center justify-center py-12 text-gray-400 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                    <svg class="w-12 h-12 mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <p class="font-medium">Tidak ada dokumen yang cocok.</p>
+                </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-slate-800">Database Dokumen</h2>
+            <div class="flex items-center gap-2">
+                <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full">{{ total_docs }} Files</span>
+                <span class="text-xs text-gray-500">Page {{ current_page }} of {{ total_pages }}</span>
+            </div>
+        </div>
+        
+        {% if total_docs == 0 %}
+            <p class="text-center text-gray-500 py-10">Folder JournalMedis kosong.</p>
+        {% else %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+                {% for doc in files %}
+                <div class="bg-white border border-gray-200 p-5 rounded-xl hover:shadow-md hover:border-indigo-300 transition group flex flex-col justify-between h-full">
+                    <div>
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="bg-orange-100 p-2 rounded-lg text-orange-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            </div>
+                            <div class="font-bold text-sm text-slate-700 truncate w-full" title="{{ doc.filename }}">{{ doc.filename }}</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs text-gray-500 mb-4">
+                            <div class="bg-gray-50 p-2 rounded text-center">
+                                <span class="block font-bold text-slate-700">{{ doc.count_base }}</span>
+                                Kata Dasar
+                            </div>
+                            <div class="bg-gray-50 p-2 rounded text-center">
+                                <span class="block font-bold text-slate-700">{{ doc.terms|length }}</span>
+                                Unik
+                            </div>
+                        </div>
+                    </div>
+                    <a href="/detail/{{ doc.filename }}" class="block w-full text-center bg-white border border-gray-200 text-gray-600 text-sm font-medium py-2 rounded-lg hover:bg-gray-50 hover:text-indigo-600 transition">
+                        Lihat Detail
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="flex justify-center items-center gap-2">
+                {% if current_page > 1 %}
+                <a href="{{ url_for('index', page=current_page-1) }}" class="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 hover:text-indigo-600 transition text-sm font-medium">
+                    &larr; Previous
+                </a>
+                {% endif %}
+                
+                <div class="flex gap-1">
+                    {% for p in range(1, total_pages + 1) %}
+                        {% if p == current_page or p <= 3 or p > total_pages - 3 or (p >= current_page - 1 and p <= current_page + 1) %}
+                            <a href="{{ url_for('index', page=p) }}" class="w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition {{ 'bg-indigo-600 text-white' if p == current_page else 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50' }}">
+                                {{ p }}
+                            </a>
+                        {% elif p == 4 or p == total_pages - 3 %}
+                            <span class="w-8 h-8 flex items-center justify-center text-gray-400">...</span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                {% if current_page < total_pages %}
+                <a href="{{ url_for('index', page=current_page+1) }}" class="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 hover:text-indigo-600 transition text-sm font-medium">
+                    Next &rarr;
+                </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
