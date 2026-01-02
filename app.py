@@ -93,12 +93,16 @@ class INIdrisStemmer:
 def get_preprocessing_steps(text):
     stemmer = INIdrisStemmer()
     stopwords = load_stopwords("stopwords.txt")
-    text = text.lower()
-    text = re.sub(r'(?<=\d),(?=\d)', '.', text)
-    text = re.sub(r'(?<!\d)\.|\.(?!\d)', ' ', text)
-    text = text.replace("-", " ")
-    case_folded = re.sub(r"[^a-zA-Z0-9\s\.]", " ", text)
-    tokens = case_folded.split()
+
+    case_folded_text = text.lower()
+
+    temp_text = re.sub(r'(?<=\d),(?=\d)', '.', case_folded_text)
+    temp_text = re.sub(r'(?<!\d)\.|\.(?!\d)', ' ', temp_text)
+    temp_text = temp_text.replace("-", " ")
+
+    cleansed_text = re.sub(r"[^a-zA-Z0-9\s\.]", " ", temp_text)
+
+    tokens = cleansed_text.split()
     
     filtered = []
     for t in tokens:
@@ -106,7 +110,7 @@ def get_preprocessing_steps(text):
         if t_clean and t_clean not in stopwords:
             if len(t_clean) > 1 or t_clean.replace('.', '', 1).isdigit():
                 filtered.append(t_clean)
-    
+
     stemmed = []
     for t in filtered:
         if re.match(r'^\d+(\.\d+)?%?$', t):
@@ -122,7 +126,7 @@ def get_preprocessing_steps(text):
     
     return {
         'original': text,
-        'case_folded': case_folded,
+        'cleansed': cleansed_text,       
         'tokens': tokens,
         'filtered': filtered,
         'stemmed': final_tokens,
